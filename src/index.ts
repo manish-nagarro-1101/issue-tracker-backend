@@ -3,7 +3,7 @@ import express, { Application } from 'express';
 import { ApolloServer } from 'apollo-server-express';
 import mongoose from 'mongoose';
 import { buildSchema } from 'type-graphql';
-import { IssueResolver } from './resolvers/IssueResolver';
+import resolvers from './resolvers/Index';
 
 async function startServer() {
   const app: Application = express();
@@ -12,11 +12,15 @@ async function startServer() {
   await mongoose.connect('mongodb://localhost:27017/issuesdb', {});
 
   const schema = await buildSchema({
-    resolvers: [IssueResolver],
+    resolvers: [resolvers],
   });
 
   const server = new ApolloServer({
     schema,
+    context: (req: any) => {
+      // Pass the authenticated user to resolvers
+      return { user: req.user };
+    },
   });
 
   await server.start();
